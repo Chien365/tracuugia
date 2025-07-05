@@ -23,6 +23,9 @@
 
 <script>
 let productData = {};
+let dataReady = false;
+let scannerRunning = false;
+let html5QrCode;
 
 // Load dữ liệu từ CSV
 fetch('data.csv')
@@ -37,10 +40,16 @@ fetch('data.csv')
             price: price.trim() + " VNĐ"
         };
     });
+    dataReady = true;
+    console.log("Dữ liệu đã sẵn sàng!");
   });
 
 // Tra cứu sản phẩm
 function searchProduct() {
+    if (!dataReady) {
+        alert("Dữ liệu chưa load xong, vui lòng chờ vài giây!");
+        return;
+    }
     const code = document.getElementById('productCode').value.trim();
     const resultDiv = document.getElementById('result');
 
@@ -51,9 +60,16 @@ function searchProduct() {
     }
 }
 
-// Bật quét Camera
+// Bật Camera quét mã
 function startScanner() {
-    const html5QrCode = new Html5Qrcode("reader");
+    if (!dataReady) {
+        alert("Dữ liệu chưa load xong, vui lòng chờ!");
+        return;
+    }
+    if (scannerRunning) return; // Ngăn mở trùng
+
+    html5QrCode = new Html5Qrcode("reader");
+    scannerRunning = true;
 
     html5QrCode.start(
         { facingMode: "environment" }, // Camera sau
@@ -71,15 +87,27 @@ function startScanner() {
             console.log("Đã quét được mã: ", decodedText);
             document.getElementById('productCode').value = decodedText;
             searchProduct();
-            html5QrCode.stop();
-            document.getElementById('reader').innerHTML = "";
+            stopScanner();
         },
-        (errorMessage) => {
-            // console.log(errorMessage); // Ẩn bớt log cho đỡ rối
+        (errorMessage) => {// console.log(errorMessage); // Ẩn bớt log
         }
     ).catch(err => {
         alert("Không mở được camera: " + err);
+        scannerRunning = false;
     });
+}
+
+// Dừng Camera
+function stopScanner() {
+    if (html5QrCode) {
+        html5QrCode.stop().then(() => {
+            html5QrCode.clear();
+            scannerRunning = false;
+            document.getElementById('reader').innerHTML = "";
+        }).catch(err => {
+            console.log("Lỗi dừng camera: ", err);
+        });
+    }
 }
 </script>
 

@@ -24,7 +24,7 @@
 <script>
 let productData = {};
 
-// Đọc dữ liệu từ file CSV
+// Load dữ liệu từ CSV
 fetch('data.csv')
   .then(response => response.text())
   .then(text => {
@@ -39,6 +39,7 @@ fetch('data.csv')
     });
   });
 
+// Tra cứu sản phẩm
 function searchProduct() {
     const code = document.getElementById('productCode').value.trim();
     const resultDiv = document.getElementById('result');
@@ -50,22 +51,31 @@ function searchProduct() {
     }
 }
 
+// Bật quét Camera
 function startScanner() {
     const html5QrCode = new Html5Qrcode("reader");
+
     html5QrCode.start(
-        { facingMode: "environment" }, 
+        { facingMode: "environment" }, // Camera sau
         {
             fps: 10,
-            qrbox: 250
+            qrbox: 250,
+            formatsToSupport: [
+                Html5QrcodeSupportedFormats.EAN_13,
+                Html5QrcodeSupportedFormats.UPC_A,
+                Html5QrcodeSupportedFormats.UPC_E,
+                Html5QrcodeSupportedFormats.CODE_128
+            ]
         },
         (decodedText, decodedResult) => {
+            console.log("Đã quét được mã: ", decodedText);
             document.getElementById('productCode').value = decodedText;
             searchProduct();
             html5QrCode.stop();
             document.getElementById('reader').innerHTML = "";
         },
         (errorMessage) => {
-            console.log(errorMessage);
+            // console.log(errorMessage); // Ẩn bớt log cho đỡ rối
         }
     ).catch(err => {
         alert("Không mở được camera: " + err);

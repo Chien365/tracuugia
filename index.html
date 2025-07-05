@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Tra Cứu Giá & Tồn Kho</title>
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<style>
+    body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+    input, button { padding: 10px; margin: 10px; font-size: 16px; }
+    .result { margin-top: 20px; font-size: 18px; font-weight: bold; }
+    #reader { width: 300px; margin: 20px auto; }
+</style>
+</head>
+<body>
+
+<h1>TRA CỨU GIÁ & TỒN KHO</h1>
+<input type="text" id="productCode" placeholder="Nhập hoặc Quét Mã Barcode" autofocus />
+<button onclick="searchProduct()">Tìm kiếm</button>
+<button onclick="startScanner()">Quét mã bằng Camera</button>
+
+<div id="reader"></div>
+<div class="result" id="result"></div>
+
+<script>
+let productData = {};
+
+// Đọc dữ liệu từ file CSV
+fetch('data.csv')
+  .then(response => response.text())
+  .then(text => {
+    const lines = text.trim().split('\\n');
+    lines.forEach(line => {
+        const [barcode, name, stock, price] = line.split(',');
+        productData[barcode.trim()] = {
+            name: name.trim(),
+            stock: stock.trim(),
+            price: price.trim() + " VNĐ"
+        };
+    });
+  });
+
+function searchProduct() {
+    const code = document.getElementById('productCode').value.trim();
+    const resultDiv = document.getElementById('result');
+
+    if (productData[code]) {
+        resultDiv.innerHTML = `Tên sản phẩm: <b>${productData[code].name}</b><br>Số lượng tồn kho: <b>${productData[code].stock}</b><br>Giá bán: <b>${productData[code].price}</b>`;
+    } else {
+        resultDiv.innerHTML = "Không tìm thấy sản phẩm!";
+    }
+}
+
+function startScanner() {
+    const html5QrCode = new Html5Qrcode("reader");
+    html5QrCode.start(
+        { facingMode: "environment" }, 
+        {
+            fps: 10,
+            qrbox: 250
+        },
+        (decodedText, decodedResult) => {
+            document.getElementById('productCode').value = decodedText;
+            searchProduct();
+            html5QrCode.stop();
+            document.getElementById('reader').innerHTML = "";
+        },
+        (errorMessage) => {
+            console.log(errorMessage);
+        }
+    ).catch(err => {
+        alert("Không mở được camera: " + err);
+    });
+}
+</script>
+
+</body>
+</html>

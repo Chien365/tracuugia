@@ -52,8 +52,8 @@ function startScanner() {
       { facingMode: "environment" },
       { fps: 10, qrbox: 250 },
       (decodedText) => {
+          alert("Đã quét được mã: ", decodedText);
           console.log("Mã quét được: ", decodedText);
-
           const cleanCode = decodedText.trim();
           document.getElementById('productCode').value = cleanCode;
           searchProduct();

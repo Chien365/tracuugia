@@ -1,25 +1,4 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-<meta charset="UTF-8">
-<title>Tra Cứu Giá & Tồn Kho</title>
-<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-<style>
-    body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
-    input, button { padding: 10px; margin: 10px; font-size: 16px; }
-    .result { margin-top: 20px; font-size: 18px; font-weight: bold; }
-    #reader { width: 300px; margin: 20px auto; }
-</style>
-</head>
-<body>
-
-<h1>TRA CỨU GIÁ & TỒN KHO</h1>
-<input type="text" id="productCode" placeholder="Nhập hoặc Quét Mã Barcode" autofocus />
-<button onclick="searchProduct()">Tìm kiếm</button>
-<button onclick="startScanner()">Quét mã bằng Camera</button>
-
-<div id="reader"></div>
-<div class="result" id="result"></div>
+<script src="https://unpkg.com/html5-qrcode"></script>
 
 <script>
 let productData = {};
@@ -27,81 +6,68 @@ let dataReady = false;
 let scannerRunning = false;
 let html5QrCode;
 
-// Load dữ liệu từ CSV
+// Load dữ liệu
 fetch('data.csv')
-  .then(response => response.text())
+  .then(res => res.text())
   .then(text => {
     const lines = text.trim().split('\n');
     lines.forEach(line => {
-        const [barcode, name, stock, price] = line.split(',');
-        productData[barcode.trim()] = {
-            name: name.trim(),
-            stock: stock.trim(),
-            price: price.trim() + " VNĐ"
-        };
+      const [barcode, name, stock, price] = line.split(',');
+      productData[barcode.trim()] = {
+          name: name.trim(),
+          stock: stock.trim(),
+          price: price.trim() + " VNĐ"
+      };
     });
     dataReady = true;
-    console.log("Dữ liệu đã sẵn sàng!");
+    console.log("Dữ liệu đã load xong!");
   });
 
-// Tra cứu sản phẩm
+// Tìm sản phẩm
 function searchProduct() {
-    if (!dataReady) {
-        alert("Dữ liệu chưa load xong, vui lòng chờ vài giây!");
-        return;
-    }
+    if (!dataReady) return alert("Chờ dữ liệu!");
     const code = document.getElementById('productCode').value.trim();
     const resultDiv = document.getElementById('result');
 
     if (productData[code]) {
-        resultDiv.innerHTML = `Tên sản phẩm: <b>${productData[code].name}</b><br>Số lượng tồn kho: <b>${productData[code].stock}</b><br>Giá bán: <b>${productData[code].price}</b>`;
+        resultDiv.innerHTML = `
+            <b>Tên:</b> ${productData[code].name}<br>
+            <b>Số lượng:</b> ${productData[code].stock}<br>
+            <b>Giá:</b> ${productData[code].price}
+        `;
     } else {
         resultDiv.innerHTML = "Không tìm thấy sản phẩm!";
     }
 }
 
-// Bật Camera quét mã
+// Mở camera
 function startScanner() {
-    if (!dataReady) {
-        alert("Dữ liệu chưa load xong, vui lòng chờ!");
-        return;
-    }
+    if (!dataReady) return alert("Chờ dữ liệu!");
     if (scannerRunning) return;
 
     html5QrCode = new Html5Qrcode("reader");
     scannerRunning = true;
 
     html5QrCode.start(
-        { facingMode: "environment" },
-        {
-            fps: 10,
-            qrbox: 250,
-            supportedScanTypes: [ Html5QrcodeScanType.SCAN_TYPE_CAMERA ],
-            formatsToSupport: [
-                Html5QrcodeSupportedFormats.EAN_13
-            ]
-        },
-        async (decodedText, decodedResult) => {
-            if (!scannerRunning) return;
-            console.log("Đã quét được mã: ", decodedText);
+      { facingMode: "environment" },
+      { fps: 10, qrbox: 250 },
+      (decodedText) => {
+          console.log("Mã quét được: ", decodedText);
 
-            await html5QrCode.stop();
-            html5QrCode.clear();
-            scannerRunning = false;
-            document.getElementById('reader').innerHTML = "";
+          const cleanCode = decodedText.trim();
+          document.getElementById('productCode').value = cleanCode;
+          searchProduct();
 
-            document.getElementById('productCode').value = decodedText;
-            searchProduct();
-        },
-        (errorMessage) => {
-            // console.log(errorMessage); 
-        }
+          html5QrCode.stop().then(() => {
+              html5QrCode.clear();
+              document.getElementById('reader').innerHTML = "";
+              scannerRunning = false;
+          }).catch(err => console.error("Lỗi dừng camera: ", err));
+      },
+      (err) => {} // Bỏ log lỗi cho đỡ rối
     ).catch(err => {
-        alert("Không mở được camera: " + err);
-        scannerRunning = false;
+      alert("Không mở được camera: " + err);
+      scannerRunning = false;
     });
 }
 </script>
-
-</body>
-</html>

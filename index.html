@@ -66,13 +66,13 @@ function startScanner() {
         alert("Dữ liệu chưa load xong, vui lòng chờ!");
         return;
     }
-    if (scannerRunning) return; // Ngăn mở trùng
+    if (scannerRunning) return;
 
     html5QrCode = new Html5Qrcode("reader");
     scannerRunning = true;
 
     html5QrCode.start(
-        { facingMode: "environment" }, // Camera sau
+        { facingMode: "environment" },
         {
             fps: 10,
             qrbox: 250,
@@ -83,31 +83,24 @@ function startScanner() {
                 Html5QrcodeSupportedFormats.CODE_128
             ]
         },
-        (decodedText, decodedResult) => {
+        async (decodedText, decodedResult) => {
+            if (!scannerRunning) return;
             console.log("Đã quét được mã: ", decodedText);
+
+            await html5QrCode.stop();
+            html5QrCode.clear();
+            scannerRunning = false;
+            document.getElementById('reader').innerHTML = "";
             document.getElementById('productCode').value = decodedText;
             searchProduct();
-            stopScanner();
         },
-        (errorMessage) => {// console.log(errorMessage); // Ẩn bớt log
+        (errorMessage) => {
+            // console.log(errorMessage); // Ẩn log
         }
     ).catch(err => {
         alert("Không mở được camera: " + err);
         scannerRunning = false;
     });
-}
-
-// Dừng Camera
-function stopScanner() {
-    if (html5QrCode) {
-        html5QrCode.stop().then(() => {
-            html5QrCode.clear();
-            scannerRunning = false;
-            document.getElementById('reader').innerHTML = "";
-        }).catch(err => {
-            console.log("Lỗi dừng camera: ", err);
-        });
-    }
 }
 </script>
 

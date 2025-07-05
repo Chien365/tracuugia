@@ -25,7 +25,7 @@
 let productData = {};
 
 // Load dữ liệu từ CSV
-fetch('data.csv')
+fetch('https://raw.githubusercontent.com/Chien365/tracuugia/refs/heads/main/data.csv')
   .then(response => response.text())
   .then(text => {
     const lines = text.trim().split('\\n');

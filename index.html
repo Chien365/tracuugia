@@ -72,7 +72,7 @@ function startScanner() {
 
     html5QrCode.start(
       { facingMode: "environment" },
-      { fps: 15, qrbox: 350 },
+      { fps: 30, qrbox: 350 },
       (decodedText) => {
           alert("Đã quét được: " + decodedText);
           console.log("Mã quét được:", decodedText);
